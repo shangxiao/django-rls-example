@@ -1,0 +1,8 @@
+-e git+https://github.com/django/django.git@f31a2e10932e0b98f311786e0db6c307b48d27a0#egg=Django
+black==25.1.0
+django-extensions==3.2.3
+ipdb==0.13.13
+psycopg==3.2.6
+pytest==8.3.5
+pytest-django==4.11.0
+pytest-watch==4.2.0
