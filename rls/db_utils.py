@@ -1,7 +1,5 @@
 from django.db import connection
 from django.db.migrations.operations.base import Operation, OperationCategory
-from django.db.models import Q, QuerySet
-from django.db.models.sql.query import Query
 
 
 def set_config(param, value):
@@ -37,20 +35,7 @@ def create_policy(schema_editor, policy_name, model, condition):
     # if condition is directly on model attrs then can build_where() like a check constraint
     # if condition is from a lookup table then build the full query
     table = schema_editor.quote_name(model._meta.db_table)
-
-    if isinstance(condition, str):
-        using = condition
-
-    elif isinstance(condition, Q):
-        query = Query(model=model, alias_cols=False)
-        where = query.build_where(condition)
-        compiler = query.get_compiler(connection=schema_editor.connection)
-        using, params = where.as_sql(compiler, schema_editor.connection)
-
-    elif isinstance(condition, QuerySet):
-        breakpoint()
-        pass
-
+    using = condition
     schema_editor.execute(
         f"CREATE POLICY {schema_editor.quote_name(policy_name)} ON {table} USING ({using}) WITH CHECK ({using})"
     )
@@ -60,6 +45,17 @@ def drop_policy(schema_editor, policy_name, model):
     table = schema_editor.quote_name(model._meta.db_table)
     schema_editor.execute(
         f"DROP POLICY IF EXISTS {schema_editor.quote_name(policy_name)} ON {table}"
+    )
+
+
+def alter_policy(schema_editor, policy_name, model, condition):
+    table = schema_editor.quote_name(model._meta.db_table)
+
+    if isinstance(condition, str):
+        using = condition
+
+    schema_editor.execute(
+        f"ALTER POLICY {schema_editor.quote_name(policy_name)} ON {table} USING ({using}) WITH CHECK ({using})"
     )
 
 
@@ -115,3 +111,53 @@ class CreatePolicy(Operation):
 
     def describe(self):
         return f"Create Policy {self.policy_name}"
+
+
+class DropPolicy(Operation):
+    category = OperationCategory.REMOVAL
+
+    def __init__(self, model_name, db_rls_condition):
+        self.model_name = model_name
+        self.policy_name = model_name + "_policy"
+        self.db_rls_condition = db_rls_condition
+
+    def state_forwards(self, app_label, state):
+        state.alter_model_options(
+            app_label, self.model_name, {"db_rls_condition": None}
+        )
+
+    def database_forwards(self, app_label, schema_editor, from_state, to_state):
+        to_model = to_state.apps.get_model(app_label, self.model_name)
+        drop_policy(schema_editor, self.policy_name, to_model)
+
+    def database_backwards(self, app_label, schema_editor, from_state, to_state):
+        to_model = to_state.apps.get_model(app_label, self.model_name)
+        if db_rls_condition := getattr(to_model._meta, "db_rls_condition", None):
+            create_policy(schema_editor, self.policy_name, to_model, db_rls_condition)
+
+    def describe(self):
+        return f"Drop Policy {self.policy_name}"
+
+
+class AlterPolicy(Operation):
+    category = OperationCategory.ALTERATION
+
+    def __init__(self, model_name, db_rls_condition):
+        self.model_name = model_name
+        self.policy_name = model_name + "_policy"
+        self.db_rls_condition = db_rls_condition
+
+    def state_forwards(self, app_label, state):
+        state.alter_model_options(
+            app_label, self.model_name, {"db_rls_condition": self.db_rls_condition}
+        )
+
+    def database_forwards(self, app_label, schema_editor, from_state, to_state):
+        to_model = to_state.apps.get_model(app_label, self.model_name)
+        alter_policy(schema_editor, self.policy_name, to_model, self.db_rls_condition)
+
+    def database_backwards(self, app_label, schema_editor, from_state, to_state):
+        self.database_forwards(app_label, schema_editor, from_state, to_state)
+
+    def describe(self):
+        return f"Alter Policy {self.policy_name}"

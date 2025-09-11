@@ -29,3 +29,12 @@ Possible approach this PoC is exploring:
      - Only set params/roles in a transaction
      - Only allow a single setting
      - Therefore wrapping any DB access with a transaction which may not be ideal for high volume
+
+Further notes:
+
+ - If using the transaction approach above then it will need to wrap around template rendering, if template contexts
+   contain lazy querysets (and most likely will).
+ - Using `ATOMIC_REQUESTS` will not help here: https://docs.djangoproject.com/en/5.2/topics/db/transactions/#tying-transactions-to-http-requests
+ - Perhaps a custom middleware is what is required - but this will be causing unnecessary DB traffic for any request not
+   requesting DB data
+ - Custom connection to wrap in transaction?
