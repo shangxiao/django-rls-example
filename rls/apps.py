@@ -32,22 +32,32 @@ def rls_changes(
     from_db_rls_condition = from_model_state.options.get("db_rls_condition")
     to_db_rls_condition = to_model_state.options.get("db_rls_condition")
 
-    if not from_db_rls_condition and to_db_rls_condition:
+    # render before passing to operation to avoid complex objects from being serialized
 
-        # maybe render before passing to operation to avoid complex objects from being serialized
-        if isinstance(to_db_rls_condition, str):
-            db_rls_condition = to_db_rls_condition
-        elif callable(to_db_rls_condition):
-            db_rls_condition = to_db_rls_condition()
+    if from_db_rls_condition:
+        if callable(from_db_rls_condition):
+            from_db_rls_condition = from_db_rls_condition()
             model = to_state.apps.get_model(app_label, model_name)
             query = Query(model=model)  # must alias_cols!
-            where = query.build_where(db_rls_condition)
+            where = query.build_where(from_db_rls_condition)
             compiler = query.get_compiler(connection=connection)
             using, params = where.as_sql(compiler, connection)
             with connection.cursor() as cur:
-                db_rls_condition = cur.mogrify(using, params)
+                from_db_rls_condition = cur.mogrify(using, params)
 
-        operations += [CreatePolicy(model_name, db_rls_condition)]
+    if to_db_rls_condition:
+        if callable(to_db_rls_condition):
+            to_db_rls_condition = to_db_rls_condition()
+            model = to_state.apps.get_model(app_label, model_name)
+            query = Query(model=model)  # must alias_cols!
+            where = query.build_where(to_db_rls_condition)
+            compiler = query.get_compiler(connection=connection)
+            using, params = where.as_sql(compiler, connection)
+            with connection.cursor() as cur:
+                to_db_rls_condition = cur.mogrify(using, params)
+
+    if not from_db_rls_condition and to_db_rls_condition:
+        operations += [CreatePolicy(model_name, to_db_rls_condition)]
 
     elif from_db_rls_condition and not to_db_rls_condition:
         operations += [DropPolicy(model_name, from_db_rls_condition)]
@@ -88,10 +98,11 @@ class RlsConfig(AppConfig):
     name = "rls"
 
     def ready(self):
+        pass
         # unregister() should return the serializer
-        iterable_serializer = Serializer._registry.pop(collections.abc.Iterable)
-        Serializer.register(QuerySet, QuerySetSerializer)
-        Serializer.register(BaseExpression, ExpressionSerializer)
-        Serializer.register(collections.abc.Iterable, iterable_serializer)
-        Serializer._registry.pop(FUNCTION_TYPES)
-        Serializer.register(FunctionType, LambdaSerializer)
+        # iterable_serializer = Serializer._registry.pop(collections.abc.Iterable)
+        # Serializer.register(QuerySet, QuerySetSerializer)
+        # Serializer.register(BaseExpression, ExpressionSerializer)
+        # Serializer.register(collections.abc.Iterable, iterable_serializer)
+        # Serializer._registry.pop(FUNCTION_TYPES)
+        # Serializer.register(FunctionType, LambdaSerializer)

@@ -32,8 +32,6 @@ def disable_rls(schema_editor, model):
 
 
 def create_policy(schema_editor, policy_name, model, condition):
-    # if condition is directly on model attrs then can build_where() like a check constraint
-    # if condition is from a lookup table then build the full query
     table = schema_editor.quote_name(model._meta.db_table)
     using = condition
     schema_editor.execute(

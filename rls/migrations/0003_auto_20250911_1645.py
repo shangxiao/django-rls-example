@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         ),
         rls.db_utils.CreatePolicy(
             model_name="account",
-            db_rls_condition="exists (select 1 from rls_accountaccess auth where auth.user_id = nullif(current_setting('app.user', true), '')::int and auth.account_id = rls_account.id)",
+            db_rls_condition='EXISTS(SELECT 1 AS "a" FROM "rls_accountaccess" U0 WHERE (U0."account_id" = ("rls_account"."id") AND U0."user_id" = (nullif(current_setting(\'app.user\', true), \'\')::int)) LIMIT 1)',
         ),
     ]
