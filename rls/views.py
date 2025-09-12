@@ -1,7 +1,20 @@
 from contextlib import contextmanager
 
-from django.db import connection, transaction, connections
+from django.contrib.auth import get_user_model
+from django.db import connection, connections, transaction
 from django.http.response import HttpResponse
+from django.views.generic import ListView
+
+from rls.db_utils import set_config
+from rls.models import Account
+
+User = get_user_model()
+
+
+class AccountListView(ListView):
+    def get_queryset(self):
+        set_config("app.user", User.objects.get(username="bob").pk)
+        return Account.objects.all()
 
 
 # Notes
@@ -46,7 +59,7 @@ def authenticate_id(user_id):
         print(f"SET my.user_id = '{user_id}'")
         cursor.execute(f"SET my.user_id = '{user_id}'")
         yield
-        print(f"RESET my.user_id")
+        print("RESET my.user_id")
         cursor.execute("RESET my.user_id")
 
 

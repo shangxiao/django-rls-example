@@ -27,6 +27,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "rls.middleware.atomic_request_middleware",
 ]
 
 ROOT_URLCONF = "django_rls.urls"
@@ -59,6 +60,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "rls",
         "USER": "rls",
+        # "ATOMIC_REQUESTS": True,
     },
     # A superuser connection
     "superuser": {
@@ -67,6 +69,8 @@ DATABASES = {
         "USER": "dsanders",
     },
 }
+
+# ATOMIC_REQUESTS = True
 
 
 # Password validation

@@ -1,0 +1,7 @@
+<ul>
+  {% for account in object_list %}
+  <li>{{ account }}</li>
+  {% empty %}
+  <li>Nothing</li>
+  {% endfor %}
+</ul>
