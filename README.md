@@ -80,3 +80,4 @@ Further notes:
  - Perhaps a custom middleware is what is required - but this will be causing unnecessary DB traffic for any request not
    requesting DB data
  - Custom connection to wrap in transaction?
+ - Some discussion here about this sort of thing: https://www.reddit.com/r/PostgreSQL/comments/1jd7srp/costrisk_of_putting_every_query_in_an_explicit/
