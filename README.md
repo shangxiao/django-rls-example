@@ -36,7 +36,7 @@ AccountAccess.objects.create(user=bob, account=kfc)
 # params are either session-local or transaction-local meaning they clear automatically
 # sessions are shared/long-lived for web apps so creating transaction local user id seems to be the
 # "secure" way to set it and prevent leaking. (template responses can be forced rendered within a
-# transaction by using some middleware during process_template_response())
+# transaction by using a middleware hook process_template_response())
 
 with transaction.atomic():
     set_config('app.user', bob.pk)  # utility to create a transaction-local param
