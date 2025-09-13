@@ -27,7 +27,7 @@ class Account(Model):
 
 # from the console:
 
-# for rls to work the "regular" connection must not be a superuser (see notes below, you can use a
+# for rls to work the "default" connection must not be a superuser (see notes below, you can use a
 # single connection as long as its not superuser and rls is "forced")
 kfc = Account.objects.using("superuser").create(name="KFC")
 mcd = Account.objects.using("superuser").create(name="McDonalds")
