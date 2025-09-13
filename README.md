@@ -27,14 +27,16 @@ class Account(Model):
 
 # from the console:
 
-# for rls to work the "regular" connection must not be a superuser (see notes below, you can use a single connection as long as its not superuser and rls is "forced")
+# for rls to work the "regular" connection must not be a superuser (see notes below, you can use a
+# single connection as long as its not superuser and rls is "forced")
 kfc = Account.objects.using("superuser").create(name="KFC")
 mcd = Account.objects.using("superuser").create(name="McDonalds")
 AccountAccess.objects.create(user=bob, account=kfc)
 
 # params are either session-local or transaction-local meaning they clear automatically
-# sessions are shared/long-lived for web apps so creating transaction local user id seems to be the "secure" way to set it and prevent leaking
-# in practice though querysets are often evaluated during template rendering meaning this approach may not even be useful ¯\_(ツ)_/¯
+# sessions are shared/long-lived for web apps so creating transaction local user id seems to be the
+# "secure" way to set it and prevent leaking in practice though querysets are often evaluated during
+# template rendering meaning this approach may not even be useful ¯\_(ツ)_/¯
 
 with transaction.atomic():
     set_config('app.user', bob.pk)  # utility to create a transaction-local param
