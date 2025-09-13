@@ -1,20 +1,15 @@
 from contextlib import contextmanager
 
-from django.contrib.auth import get_user_model
 from django.db import connection, connections, transaction
 from django.http.response import HttpResponse
+from django.utils.decorators import method_decorator
 from django.views.generic import ListView
-
-from rls.db_utils import set_config
 from rls.models import Account
 
-User = get_user_model()
 
-
+@method_decorator(transaction.non_atomic_requests, name="dispatch")
 class AccountListView(ListView):
-    def get_queryset(self):
-        set_config("app.user", User.objects.get(username="bob").pk)
-        return Account.objects.all()
+    model = Account
 
 
 # Notes
