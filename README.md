@@ -21,7 +21,7 @@ class Account(Model):
         db_rls = True
 
         # creates a policy
-        # lambda here because querysets accessing related models requires apps to be ready
+        # lambda here because Account isn't "ready" yet and we're attempting to access the account fk
         db_rls_condition = lambda: Exists(AccountAccess(account=OuterRef("pk"), user=AppUser()))
 
 
